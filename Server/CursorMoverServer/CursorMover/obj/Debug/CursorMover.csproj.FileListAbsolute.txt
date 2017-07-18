@@ -1,0 +1,6 @@
+c:\users\dimch\documents\visual studio 2017\Projects\CursorMover\CursorMover\bin\Debug\CursorMover.exe.config
+c:\users\dimch\documents\visual studio 2017\Projects\CursorMover\CursorMover\bin\Debug\CursorMover.exe
+c:\users\dimch\documents\visual studio 2017\Projects\CursorMover\CursorMover\bin\Debug\CursorMover.pdb
+c:\users\dimch\documents\visual studio 2017\Projects\CursorMover\CursorMover\obj\Debug\CursorMover.csprojResolveAssemblyReference.cache
+c:\users\dimch\documents\visual studio 2017\Projects\CursorMover\CursorMover\obj\Debug\CursorMover.exe
+c:\users\dimch\documents\visual studio 2017\Projects\CursorMover\CursorMover\obj\Debug\CursorMover.pdb

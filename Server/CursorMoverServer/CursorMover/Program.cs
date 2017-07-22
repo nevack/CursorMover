@@ -13,33 +13,10 @@ namespace CursorMover
     {
         static void Main(string[] args)
         {
-            TcpListener listener = new TcpListener(IPAddress.Any, 7000);
-            listener.Start();
-
-            TcpClient client = listener.AcceptTcpClient();
-
-            NetworkStream stream = client.GetStream();
-            var w = new BinaryWriter(stream);
-            var r = new BinaryReader(stream);
-
-            var q = false;
-            while (!q)
-            {
-                var c = r.ReadByte();
-                char[] array = new char[c];
-                for (var i = 0; i < c; i++)
-                {
-                    array[i] = r.ReadChar();
-                }
-                var s = new string(array);
-                Console.WriteLine(s);
-
-                var x = int.Parse(s.Split(' ')[0]);
-                var y = int.Parse(s.Split(' ')[1]);
-
-                Win32.SetCursorPos(x, y);
-                if (s.Equals(".")) q = true;
-            }
+            var port = 7000;
+            //StartTcpServer(port);
+            StartUdpServer(port);
+            
 
             Console.WriteLine("Session is over!");
             Console.ReadKey(true);
@@ -52,6 +29,88 @@ namespace CursorMover
             //    System.Threading.Thread.Sleep(1000 / 24);
             //    Win32.SetCursorPos(p.x + 1, p.y + 1);
             //}
+        }
+
+
+        public static void StartTcpServer(int port)
+        {
+            TcpListener listener = new TcpListener(IPAddress.Any, port);
+            listener.Start();
+
+            TcpClient client = listener.AcceptTcpClient();
+
+            NetworkStream stream = client.GetStream();
+            var w = new BinaryWriter(stream);
+            var r = new BinaryReader(stream);
+
+            var watch = System.Diagnostics.Stopwatch.StartNew();
+            var q = false;
+            var count = 0;
+            while (!q)
+            {
+                count++;
+                var c = r.ReadByte();
+                char[] array = new char[c];
+                for (var i = 0; i < c; i++)
+                {
+                    array[i] = r.ReadChar();
+                }
+                var s = new string(array);
+
+                var x = int.Parse(s.Split(' ')[0]);
+                var y = int.Parse(s.Split(' ')[1]);
+
+                Win32.SetCursorPos(x, y);
+                if (s.Equals(".")) q = true;
+
+                var elapsedMs = watch.ElapsedMilliseconds;
+                var fps = 5; //1000 / elapsedMs;
+                Console.WriteLine($"X:{x} Y:{y} Count:{count} Time taken: {elapsedMs}ms FPS:{fps}");
+                watch.Restart();
+            }
+            watch.Stop();
+        }
+
+        public static void StartUdpServer(int port)
+        {
+            UdpClient reciever = new UdpClient(port);
+            IPEndPoint RemoteIpEndPoint = new IPEndPoint(IPAddress.Any, port);
+
+            var watch = System.Diagnostics.Stopwatch.StartNew();
+            var q = false;
+            var count = 0;
+            while (!q)
+            {
+                count++;
+                var receiveBytes = reciever.Receive(ref RemoteIpEndPoint);
+                var s = Encoding.UTF8.GetString(receiveBytes);
+
+                var x = int.Parse(s.Split(' ')[0]);
+                var y = int.Parse(s.Split(' ')[1]);
+
+                Win32.SetCursorPos(x, y);
+                if (s.Equals(".")) q = true;
+
+                var elapsedMs = watch.ElapsedMilliseconds;
+                var fps = 5; //1000 / elapsedMs;
+                Console.WriteLine($"X:{x} Y:{y} Count:{count} Time taken: {elapsedMs}ms FPS:{fps}");
+                watch.Restart();
+            }
+            watch.Stop();
+        }
+
+        public static void SetCursorPosition(int x, int y)
+        {
+            Win32.SetCursorPos(x, y);
+        }
+
+        public static void MoveCursorBy(int deltax, int deltay)
+        {
+            Win32.POINT p = new Win32.POINT();
+            Win32.GetCursorPos(out p);
+
+            System.Threading.Thread.Sleep(1000 / 24);
+            Win32.SetCursorPos(p.x + deltax, p.y + deltay);
         }
     }
 }

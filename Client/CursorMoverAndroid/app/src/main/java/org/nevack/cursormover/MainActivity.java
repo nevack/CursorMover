@@ -7,12 +7,15 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
-import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
 import java.net.Socket;
+import java.net.SocketException;
+import java.net.UnknownHostException;
+import java.nio.charset.Charset;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -33,27 +36,23 @@ public class MainActivity extends AppCompatActivity {
             Socket client = new Socket(serverName, port);
 
             Log.d("Tag","Just connected to " + client.getRemoteSocketAddress());
-            OutputStream outToServer = client.getOutputStream();
-            out = new DataOutputStream(outToServer);
-            InputStream inFromServer = client.getInputStream();
-            DataInputStream in = new DataInputStream(inFromServer);
+            out = new DataOutputStream(client.getOutputStream());
         } catch(IOException e) {
             e.printStackTrace();
         }
 
         View view = findViewById(R.id.touch);
-        view.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
+        view.setOnTouchListener((v, event) -> {
 
-                v.performClick();
-                float x = event.getX();
-                float y = event.getY();
+            v.performClick();
+            float x = event.getX();
+            float y = event.getY();
 
-//                if(event.getAction() == MotionEvent.ACTION_DOWN) {
-//
-//                    String s = Math.round(x) + " " + Math.round(y);
-//                    Log.d("Tag", s);
+            switch (event.getAction()) {
+                case MotionEvent.ACTION_DOWN:
+                case MotionEvent.ACTION_MOVE:
+                    String s = Math.round(x) + " " + Math.round(y);
+                    Log.d("Tag", s);
 //                    int c = s.length();
 //                    try {
 //                        out.writeByte(c);
@@ -61,30 +60,25 @@ public class MainActivity extends AppCompatActivity {
 //                    } catch (IOException e) {
 //                        e.printStackTrace();
 //                    }
-//                    return true;
-//                }
-
-                switch (event.getAction()) {
-                    case MotionEvent.ACTION_DOWN: // нажатие
-                    case MotionEvent.ACTION_MOVE: // движение
-                        String s = Math.round(x) + " " + Math.round(y);
-                        Log.d("Tag", s);
-                        int c = s.length();
-                        try {
-                            out.writeByte(c);
-                            out.writeBytes(s);
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                        break;
-                    case MotionEvent.ACTION_UP: // отпускание
-                    case MotionEvent.ACTION_CANCEL:
-                        // ничего не делаем
-                        break;
-                }
-
-                return true;
+                    byte[] buf = s.getBytes(Charset.forName("UTF-8"));
+                    try {
+                        InetAddress inetAddress = InetAddress.getByName(serverName);
+                        DatagramSocket socket = new DatagramSocket();
+                        DatagramPacket packet = new DatagramPacket(buf, buf.length,
+                                inetAddress, port);
+                        socket.send(packet);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    break;
+                case MotionEvent.ACTION_UP:
+                case MotionEvent.ACTION_CANCEL:
+                    break;
             }
+
+            return true;
         });
+
+
     }
 }

@@ -1,11 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
+﻿using AudioSwitcher.AudioApi.CoreAudio;
+using System;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace CursorMover
 {
@@ -15,17 +12,13 @@ namespace CursorMover
         {
             var port = 7000;
             StartUdpServer(port);
-            
-            Console.WriteLine("Session is over!");
-            Console.ReadKey(true);
         }
 
         public static void StartUdpServer(int port)
         {
             UdpClient reciever = new UdpClient(port);
             IPEndPoint RemoteIpEndPoint = new IPEndPoint(IPAddress.Any, port);
-
-            var watch = System.Diagnostics.Stopwatch.StartNew();
+            
             var q = false;
 
             while (!q)
@@ -38,15 +31,11 @@ namespace CursorMover
                 var y = int.Parse(array[1]);
 
                 MoveCursorBy(x, y);
-                if (s.Equals(".")) q = true;
 
-                var elapsedMs = watch.ElapsedMilliseconds;
-                elapsedMs += elapsedMs == 0 ? 1 : 0;
-                var fps = 1000 / elapsedMs;
-                Console.WriteLine($"X:{x} Y:{y} Time taken: {elapsedMs}ms FPS:{fps}");
-                watch.Restart();
+                if (s.Equals(".")) q = true;
+                
+                Console.WriteLine($"Deltas: X={x} Y={y}");
             }
-            watch.Stop();
         }
 
         public static void SetCursorPosition(int x, int y)
@@ -59,6 +48,19 @@ namespace CursorMover
             Win32.POINT p = new Win32.POINT();
             Win32.GetCursorPos(out p);
             Win32.SetCursorPos(p.x + deltax, p.y + deltay);
+        }
+
+        public static int GetVolume()
+        {
+            var defaultPlaybackDevice = new CoreAudioController().DefaultPlaybackDevice;
+            return Convert.ToInt32(defaultPlaybackDevice.Volume);
+        }
+
+        public static void SetVolume(int volume)
+        {
+            if (volume < 0 || volume > 100) throw new ArgumentOutOfRangeException("volume");
+            var defaultPlaybackDevice = new CoreAudioController().DefaultPlaybackDevice;
+            defaultPlaybackDevice.Volume = volume;
         }
     }
 }
